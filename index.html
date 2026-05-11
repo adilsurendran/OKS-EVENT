@@ -1376,6 +1376,7 @@
     .hero-buttons { flex-direction: column; align-items: center; }
     .btn-primary, .btn-secondary { width: 100%; max-width: 280px; text-align: center; }
     .stats-grid { grid-template-columns: 1fr 1fr; }
+    .cta-form-grid { grid-template-columns: 1fr !important; }
   }
 
   /* ======================== UTILITY ======================== */
@@ -1804,7 +1805,7 @@
       <p style="font-size:16px; color:var(--white-50); line-height:1.8; margin-bottom:50px; font-weight:300;">Tell us your dream event and let our experts craft a tailored decoration plan that exceeds every expectation.</p>
 
       <form style="display:flex; flex-direction:column; gap:16px; max-width:500px; margin:0 auto 40px;" onsubmit="event.preventDefault();">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div class="cta-form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
           <input type="text" placeholder="Your Name" style="background:var(--white-05); border:1px solid var(--white-10); color:var(--white); padding:16px 20px; font-family:var(--font-body); font-size:14px; border-radius:2px; outline:none; transition:border-color 0.3s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--white-10)'">
           <input type="tel" placeholder="Phone Number" style="background:var(--white-05); border:1px solid var(--white-10); color:var(--white); padding:16px 20px; font-family:var(--font-body); font-size:14px; border-radius:2px; outline:none; transition:border-color 0.3s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--white-10)'">
         </div>
