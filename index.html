@@ -6,6 +6,8 @@
 <title>OKS Event Planner — Premium Events</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="Static/Images/oks-logo.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
 <style>
   :root {
     --black: #080808;
@@ -50,7 +52,7 @@
     position: fixed;
     inset: 0;
     background: var(--black);
-    z-index: 9999;
+    z-index: 10005;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1081,14 +1083,13 @@
 
   @media (max-width: 768px) {
     .modal-nav {
-      bottom: 20px;
-      top: auto;
-      transform: none;
-      width: 50px;
-      height: 50px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 45px;
+      height: 45px;
     }
-    .modal-prev { left: 30%; }
-    .modal-next { right: 30%; }
+    .modal-prev { left: 15px; }
+    .modal-next { right: 15px; }
     .modal-label { bottom: -80px; font-size: 16px; }
     .gallery-modal.active .modal-label { bottom: -60px; }
     .modal-close { top: 15px; right: 15px; width: 40px; height: 40px; font-size: 24px; }
@@ -1562,6 +1563,450 @@
     animation: border-shimmer 4s linear infinite;
     z-index: -1;
   }
+  /* ======================== SCROLL STORY ======================== */
+
+  /* ── SCROLL HEIGHT CONFIG ─────────────────────────────────────────────────
+     300vh total = 60vh scroll per scene (5 scenes).
+     ↑ INCREASE this value to make the user scroll more between scenes.
+     ↓ DECREASE this value for faster, quicker scene transitions.
+     Formula: height = SCENES × vh_per_scene  (currently 5 × 60 = 300vh)
+  ──────────────────────────────────────────────────────────────────────── */
+  #scroll-story-trigger {
+    height: 300vh;     /* ← CHANGE SCROLL HEIGHT HERE */
+    position: relative;
+  }
+
+  /* Sticky container — stays fixed while user scrolls through trigger height */
+  #scroll-story {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;  /* clip scenes sliding off-screen */
+    background: var(--black);
+    z-index: 9999;
+  }
+
+  /* Ambient background glow */
+  .story-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 70% at 50% 100%, rgba(201,168,76,0.1) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 15% 50%, rgba(201,168,76,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 85% 40%, rgba(201,168,76,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* Subtle gold grid overlay */
+  .story-grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.035) 1px, transparent 1px);
+    background-size: 70px 70px;
+    mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 20%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 20%, transparent 80%);
+    pointer-events: none;
+  }
+
+  /* ── SCENES ────────────────────────────────────────────────────────────────
+     All scenes stacked absolutely. GSAP handles ALL position/opacity.
+     No initial CSS opacity or transform — GSAP sets starting state.
+  ──────────────────────────────────────────────────────────────────────── */
+  .story-scene {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 100px 60px 80px; /* top pad clears navbar */
+    pointer-events: none;     /* enabled only on active scene */
+    will-change: transform, opacity; /* GPU layer for smooth slides */
+    opacity: 0;
+  }
+  .story-scene.active { pointer-events: all; }
+
+  /* ── SCENE TEXT ELEMENTS ──────────────────────────────────────────────────
+     No initial opacity/transform here — GSAP animates these on each scene.
+  ──────────────────────────────────────────────────────────────────────── */
+  .story-scene-tag {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    will-change: transform, opacity;
+  }
+  .story-scene-tag::before,
+  .story-scene-tag::after {
+    content: '';
+    width: 50px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold));
+  }
+  .story-scene-tag::after { background: linear-gradient(90deg, var(--gold), transparent); }
+
+  .story-headline {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 8vw, 96px);
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    margin-bottom: 28px;
+    background: linear-gradient(135deg, var(--white) 0%, rgba(255,255,255,0.7) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    will-change: transform, opacity;
+  }
+  .story-headline em {
+    font-style: italic;
+    background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-light) 50%, var(--gold-pale) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .story-sub {
+    font-size: clamp(14px, 2vw, 18px);
+    font-weight: 300;
+    color: var(--white-50);
+    line-height: 1.8;
+    max-width: 580px;
+    margin: 0 auto;
+    letter-spacing: 0.02em;
+    will-change: transform, opacity;
+  }
+
+  /* Visual container for icons/rings etc */
+  .story-visual {
+    margin-bottom: 40px;
+    will-change: transform, opacity;
+  }
+
+  /* ── SCENE 1: Radiating gold rings ─────────────────────────────────────── */
+  .story-rings {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+  }
+  .story-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(201,168,76,0.3);
+    animation: story-ring-pulse 3s ease-in-out infinite;
+  }
+  .story-ring:nth-child(1) { width: 60px; height: 60px; animation-delay: 0s; border-color: rgba(201,168,76,0.6); }
+  .story-ring:nth-child(2) { width: 90px; height: 90px; animation-delay: 0.5s; }
+  .story-ring:nth-child(3) { width: 120px; height: 120px; animation-delay: 1s; border-color: rgba(201,168,76,0.15); }
+  .story-ring:nth-child(4) { width: 160px; height: 160px; animation-delay: 1.5s; border-color: rgba(201,168,76,0.07); }
+  @keyframes story-ring-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.08); opacity: 0.6; }
+  }
+  .story-ring-logo {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    position: relative;
+    z-index: 2;
+    filter: drop-shadow(0 0 12px rgba(201,168,76,0.5));
+  }
+
+  /* ── SCENE 2: Expertise icons ─────────────────────────────────────────── */
+  .story-icons-row {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .story-icon-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    will-change: transform, opacity;
+  }
+  .story-icon-box {
+    width: 60px;
+    height: 60px;
+    border: 1px solid rgba(201,168,76,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    background: rgba(201,168,76,0.05);
+  }
+  .story-icon-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+
+  /* ── SCENE 3: Services grid ───────────────────────────────────────────── */
+  .story-services-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    width: min(600px, 90vw);
+    margin: 0 auto 20px;
+  }
+  .story-svc-card {
+    background: rgba(201,168,76,0.04);
+    border: 1px solid rgba(201,168,76,0.15);
+    padding: 20px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    will-change: transform, opacity;
+  }
+  .story-svc-num {
+    font-family: var(--font-display);
+    font-size: 10px;
+    color: var(--gold-dark);
+    letter-spacing: 0.2em;
+  }
+  .story-svc-name {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--white);
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  /* ── SCENE 4: Stats ───────────────────────────────────────────────────── */
+  .story-stats-row {
+    display: flex;
+    gap: 60px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .story-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    will-change: transform, opacity;
+  }
+  .story-stat-num {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+  .story-stat-label {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--white-50);
+    text-transform: uppercase;
+  }
+
+  /* ── SCENE 5: CTA button ──────────────────────────────────────────────── */
+  .story-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 40px;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold-light));
+    color: var(--black);
+    border: none;
+    padding: 18px 48px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    box-shadow: 0 0 40px rgba(201,168,76,0.35);
+    will-change: transform, opacity;
+    transition: box-shadow 0.3s, transform 0.3s;
+  }
+  .story-cta-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 50px rgba(201,168,76,0.5);
+  }
+  .story-cta-arrow {
+    font-size: 18px;
+    animation: story-bounce 1.5s ease-in-out infinite;
+  }
+  @keyframes story-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(5px); }
+  }
+
+  /* ── Progress dots (right side) ───────────────────────────────────────── */
+  .story-progress {
+    position: absolute;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 300; /* above scenes */
+  }
+  .story-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(201,168,76,0.3);
+    border: 1px solid rgba(201,168,76,0.3);
+    transition: all 0.4s var(--ease-gold);
+    cursor: pointer;
+  }
+  .story-dot.active {
+    background: var(--gold);
+    box-shadow: 0 0 10px rgba(201,168,76,0.6);
+    transform: scale(1.5);
+  }
+
+  /* Scene number counter (bottom left) */
+  .story-counter {
+    position: absolute;
+    left: 40px;
+    bottom: 40px;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: rgba(201,168,76,0.4);
+    text-transform: uppercase;
+    z-index: 300;
+  }
+
+  /* Scroll hint (bottom center) */
+  .story-scroll-hint {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    animation: fade-in-up 1s ease 1s forwards;
+    z-index: 300;
+  }
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+  .story-scroll-hint span {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: rgba(201,168,76,0.5);
+    text-transform: uppercase;
+  }
+  .story-scroll-line {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+    overflow: hidden;
+    position: relative;
+  }
+  .story-scroll-line::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 60%;
+    background: white;
+    animation: scroll-pulse 1.8s ease-in-out infinite;
+  }
+
+  /* ── Skip button ──────────────────────────────────────────────────────────
+     z-index: 10001 → sits ABOVE navbar (navbar is 1000).
+     top: 90px     → below navbar height (76px) with breathing room.
+  ──────────────────────────────────────────────────────────────────────── */
+  .story-skip {
+    position: fixed;         /* fixed so it always stays visible */
+    top: 90px;               /* ← CHANGE if navbar height changes */
+    right: 28px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.25);
+    color: rgba(201,168,76,0.8);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 10001;          /* ← ABOVE navbar (1000) and overlay (9998) */
+    font-family: var(--font-body);
+    border-radius: 2px;
+  }
+  .story-skip:hover {
+    background: rgba(201,168,76,0.18);
+    color: var(--gold-light);
+    border-color: var(--gold);
+    box-shadow: 0 0 20px rgba(201,168,76,0.2);
+  }
+  /* Hide skip button when story is done */
+  #scroll-story-trigger.story-done ~ * .story-skip,
+  .story-skip.hidden { display: none; }
+
+  /* Gold divider line between elements */
+  .story-divider {
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 24px auto;
+    will-change: transform, opacity;
+  }
+
+  /* Cinematic black fade-out overlay on story complete/skip */
+  #story-outro {
+    position: fixed;
+    inset: 0;
+    background: var(--black);
+    z-index: 9998;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  /* Hide the trigger div entirely when story is done */
+  #scroll-story-trigger.story-done { display: none; }
+
+  /* ── Responsive adjustments ─────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .story-scene { padding: 100px 24px 80px; }
+    .story-progress { right: 14px; }
+    /* Skip button stays fixed above content on mobile */
+    .story-skip { top: 10px; right: 16px; padding: 8px 14px; font-size: 9px; }
+    .story-icons-row { gap: 20px; }
+    .story-services-grid { grid-template-columns: repeat(2, 1fr); }
+    .story-stats-row { gap: 30px; }
+    .story-counter { left: 20px; bottom: 30px; }
+    .story-scroll-hint { bottom: 24px; }
+    .story-headline { font-size: clamp(38px, 9vw, 64px); }
+  }
+
+
+
 </style>
 </head>
 <body>
@@ -1601,12 +2046,12 @@
     </div>
   </div>
   <ul class="nav-links">
-    <li><a onclick="showPage('home')">Home</a></li>
-    <li><a onclick="showServicePage('stage')">Stage Decor</a></li>
-    <li><a onclick="showServicePage('home-decor')">Home Decor</a></li>
-    <li><a onclick="showServicePage('outdoor')">Outdoor</a></li>
-    <li><a onclick="showServicePage('party')">Party Decor</a></li>
-    <li><a class="nav-cta" onclick="scrollToContact()">Get a Quote</a></li>
+    <li><a onclick="skipStory(); showPage('home')">Home</a></li>
+    <li><a onclick="skipStory(); showServicePage('stage')">Stage Decor</a></li>
+    <li><a onclick="skipStory(); showServicePage('home-decor')">Home Decor</a></li>
+    <li><a onclick="skipStory(); showServicePage('outdoor')">Outdoor</a></li>
+    <li><a onclick="skipStory(); showServicePage('party')">Party Decor</a></li>
+    <li><a class="nav-cta" onclick="skipStory(); scrollToContact()">Get a Quote</a></li>
   </ul>
   <div class="hamburger" id="hamburger" onclick="toggleMenu()">
     <span></span><span></span><span></span>
@@ -1615,13 +2060,150 @@
 
 <!-- MOBILE MENU -->
 <div class="mobile-menu" id="mobileMenu">
-  <a onclick="showPage('home'); toggleMenu()">Home</a>
-  <a onclick="showServicePage('stage'); toggleMenu()">Stage Decor</a>
-  <a onclick="showServicePage('home-decor'); toggleMenu()">Home Decor</a>
-  <a onclick="showServicePage('outdoor'); toggleMenu()">Outdoor Decor</a>
-  <a onclick="showServicePage('party'); toggleMenu()">Party Decor</a>
-  <a onclick="scrollToContact(); toggleMenu()">Get a Quote</a>
+  <a onclick="skipStory(); showPage('home'); toggleMenu()">Home</a>
+  <a onclick="skipStory(); showServicePage('stage'); toggleMenu()">Stage Decor</a>
+  <a onclick="skipStory(); showServicePage('home-decor'); toggleMenu()">Home Decor</a>
+  <a onclick="skipStory(); showServicePage('outdoor'); toggleMenu()">Outdoor Decor</a>
+  <a onclick="skipStory(); showServicePage('party'); toggleMenu()">Party Decor</a>
+  <a onclick="skipStory(); scrollToContact(); toggleMenu()">Get a Quote</a>
 </div>
+
+<!-- STORY OUTRO OVERLAY -->
+<div id="story-outro"></div>
+
+<!-- ========== SCROLL STORY ========== -->
+<div id="scroll-story-trigger">
+  <div id="scroll-story">
+    <div class="story-bg"></div>
+    <div class="story-grid-bg"></div>
+
+    <!-- Skip Button -->
+    <button class="story-skip" id="story-skip-btn" onclick="skipStory()">Skip Intro &#8599;</button>
+
+    <!-- Progress Dots -->
+    <div class="story-progress" id="story-progress">
+      <div class="story-dot active" onclick="goToStoryScene(0)"></div>
+      <div class="story-dot" onclick="goToStoryScene(1)"></div>
+      <div class="story-dot" onclick="goToStoryScene(2)"></div>
+      <div class="story-dot" onclick="goToStoryScene(3)"></div>
+      <div class="story-dot" onclick="goToStoryScene(4)"></div>
+    </div>
+
+    <!-- Scene Counter -->
+    <div class="story-counter" id="story-counter">01 / 05</div>
+
+    <!-- Scroll Hint -->
+    <div class="story-scroll-hint">
+      <span>Scroll</span>
+      <div class="story-scroll-line"></div>
+    </div>
+
+    <!-- ===== SCENE 1: The Welcome ===== -->
+    <div class="story-scene" id="story-scene-0">
+      <div class="story-visual">
+        <div class="story-rings">
+          <div class="story-ring"></div>
+          <div class="story-ring"></div>
+          <div class="story-ring"></div>
+          <div class="story-ring"></div>
+          <img src="Static/Images/oks-logo.png" alt="OKS" class="story-ring-logo" onerror="this.style.opacity='0'">
+        </div>
+      </div>
+      <div class="story-scene-tag">Welcome to OKS</div>
+      <h2 class="story-headline">Since <em>2015</em></h2>
+      <div class="story-divider"></div>
+      <p class="story-sub">We have crafted over 500 extraordinary moments across Kerala — turning every vision into an experience worth remembering forever.</p>
+    </div>
+
+    <!-- ===== SCENE 2: Our Expertise ===== -->
+    <div class="story-scene" id="story-scene-1">
+      <div class="story-visual">
+        <div class="story-icons-row">
+          <div class="story-icon-item" id="si-1">
+            <div class="story-icon-box">🎭</div>
+            <div class="story-icon-label">Design</div>
+          </div>
+          <div class="story-icon-item" id="si-2">
+            <div class="story-icon-box">✨</div>
+            <div class="story-icon-label">Artistry</div>
+          </div>
+          <div class="story-icon-item" id="si-3">
+            <div class="story-icon-box">👥</div>
+            <div class="story-icon-label">Team</div>
+          </div>
+          <div class="story-icon-item" id="si-4">
+            <div class="story-icon-box">🏆</div>
+            <div class="story-icon-label">Excellence</div>
+          </div>
+        </div>
+      </div>
+      <div class="story-scene-tag">Our Expertise</div>
+      <h2 class="story-headline"><em>10+</em> Years<br>of Artistry</h2>
+      <div class="story-divider"></div>
+      <p class="story-sub">Our team of seasoned designers and decorators bring decades of combined expertise to every event — big or small. Every detail, meticulously crafted.</p>
+    </div>
+
+    <!-- ===== SCENE 3: Our Services ===== -->
+    <div class="story-scene" id="story-scene-2">
+      <div class="story-scene-tag">What We Offer</div>
+      <h2 class="story-headline"><em>4</em> Premium<br>Services</h2>
+      <div class="story-divider"></div>
+      <div class="story-services-grid">
+        <div class="story-svc-card" id="svc-1">
+          <div class="story-svc-num">01</div>
+          <div class="story-svc-name">Stage Decor</div>
+        </div>
+        <div class="story-svc-card" id="svc-2">
+          <div class="story-svc-num">02</div>
+          <div class="story-svc-name">Home Decor</div>
+        </div>
+        <div class="story-svc-card" id="svc-3">
+          <div class="story-svc-num">03</div>
+          <div class="story-svc-name">Outdoor Decor</div>
+        </div>
+        <div class="story-svc-card" id="svc-4">
+          <div class="story-svc-num">04</div>
+          <div class="story-svc-name">Party Decor</div>
+        </div>
+      </div>
+      <p class="story-sub">From grand stage productions to intimate home celebrations — we transform every space into a masterpiece.</p>
+    </div>
+
+    <!-- ===== SCENE 4: Our Promise ===== -->
+    <div class="story-scene" id="story-scene-3">
+      <div class="story-scene-tag">Our Promise</div>
+      <h2 class="story-headline"><em>98%</em><br>Satisfaction</h2>
+      <div class="story-divider"></div>
+      <div class="story-stats-row">
+        <div class="story-stat" id="sst-1">
+          <div class="story-stat-num">500+</div>
+          <div class="story-stat-label">Events Crafted</div>
+        </div>
+        <div class="story-stat" id="sst-2">
+          <div class="story-stat-num">10+</div>
+          <div class="story-stat-label">Years of Excellence</div>
+        </div>
+        <div class="story-stat" id="sst-3">
+          <div class="story-stat-num">98%</div>
+          <div class="story-stat-label">Happy Clients</div>
+        </div>
+      </div>
+      <p class="story-sub">We don't just decorate. We listen, design, and deliver beyond expectations. Every time, without compromise.</p>
+    </div>
+
+    <!-- ===== SCENE 5: The Invitation ===== -->
+    <div class="story-scene" id="story-scene-4">
+      <div class="story-scene-tag">Begin Your Journey</div>
+      <h2 class="story-headline">Let's <em>Create</em><br>Together</h2>
+      <div class="story-divider"></div>
+      <p class="story-sub">Tell us about your dream event and our experts will craft a tailored plan that exceeds every expectation. Your vision, our artistry.</p>
+      <button class="story-cta-btn" id="story-final-btn" onclick="skipStory()">
+        Explore Our World <span class="story-cta-arrow">↓</span>
+      </button>
+    </div>
+
+  </div><!-- /scroll-story -->
+</div><!-- /scroll-story-trigger -->
 
 <!-- ========== HOME PAGE ========== -->
 <div id="page-home" class="page active">
@@ -2058,9 +2640,283 @@
       setTimeout(() => {
         splash.classList.add('gone');
         initReveal();
+        // Check sessionStorage — only init story on first visit per session
+        if (!sessionStorage.getItem('oks_story_seen')) {
+          initScrollStory();
+        } else {
+          // Hide story trigger so page scrolls normally
+          const trigger = document.getElementById('scroll-story-trigger');
+          if (trigger) trigger.classList.add('story-done');
+        }
       }, 800);
     }, 2800);
   });
+
+  /* ======================== SCROLL STORY ENGINE ======================== */
+  /* ======================== SCROLL STORY ENGINE ======================== */
+  let storyCurrentScene = -1;
+  const TOTAL_STORY_SCENES = 5;
+  let storyActive = false;
+  let activeStoryTl = null; // Track current animation to kill it on fast scroll
+
+  function initScrollStory() {
+    storyActive = true;
+    window.scrollTo(0, 0);
+
+    const waitForGSAP = setInterval(() => {
+      if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+        clearInterval(waitForGSAP);
+        setupGSAPStory();
+      }
+    }, 50);
+
+    setTimeout(() => {
+      if (typeof gsap === 'undefined') skipStory();
+    }, 5000);
+  }
+
+  function setupGSAPStory() {
+    gsap.registerPlugin(ScrollTrigger);
+    const trigger = document.getElementById('scroll-story-trigger');
+
+    // Ensure everything is truly off-screen and invisible before starting
+    gsap.set('.story-scene', { xPercent: 100, autoAlpha: 0, pointerEvents: 'none' });
+
+    // Force first scene to active state immediately but smoothly
+    showStoryScene(0);
+    ScrollTrigger.create({
+      trigger: trigger,
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: false,
+      onUpdate: (self) => {
+        if (!storyActive) return;
+        const progress = self.progress;
+        const sceneIndex = Math.min(
+          Math.floor(progress * TOTAL_STORY_SCENES),
+          TOTAL_STORY_SCENES - 1
+        );
+        if (sceneIndex !== storyCurrentScene) {
+          const direction = sceneIndex > storyCurrentScene ? 1 : -1;
+          showStoryScene(sceneIndex, direction);
+        }
+        if (progress >= 0.99 && storyActive) {
+          completeStory();
+        }
+      },
+      onLeave: () => {
+        if (storyActive) completeStory();
+      }
+    });
+  }
+  function showStoryScene(index, direction = 1) {
+    if (!storyActive || index === storyCurrentScene) return;
+    
+    // Kill any existing animation immediately
+    if (activeStoryTl) activeStoryTl.kill();
+    
+    const prevIndex = storyCurrentScene;
+    storyCurrentScene = index;
+
+    // 1. Update UI (Counter & Dots)
+    const counter = document.getElementById('story-counter');
+    if (counter) counter.textContent = `${String(index + 1).padStart(2, '0')} / 0${TOTAL_STORY_SCENES}`;
+    document.querySelectorAll('.story-dot').forEach((dot, i) => dot.classList.toggle('active', i === index));
+
+    const outgoingScene = document.getElementById('story-scene-' + prevIndex);
+    const incomingScene = document.getElementById('story-scene-' + index);
+
+    if (!incomingScene) return;
+
+    // Clean state for all OTHER scenes (prevents stacking bugs)
+    document.querySelectorAll('.story-scene').forEach(s => {
+      if (s !== incomingScene && s !== outgoingScene) {
+        gsap.set(s, { autoAlpha: 0, xPercent: 100, pointerEvents: 'none' });
+        s.classList.remove('active');
+      }
+    });
+
+    // Create a master timeline for this transition
+    activeStoryTl = gsap.timeline({
+      onStart: () => {
+        incomingScene.classList.add('active');
+      },
+      onComplete: () => {
+        if (outgoingScene) outgoingScene.classList.remove('active');
+      }
+    });
+
+    // 2. Animate Outgoing Scene
+    if (outgoingScene) {
+      gsap.killTweensOf([outgoingScene, outgoingScene.querySelectorAll('*')]);
+      activeStoryTl.to(outgoingScene, {
+        xPercent: -100 * direction,
+        autoAlpha: 0,
+        duration: 0.7,
+        ease: 'power2.inOut'
+      }, 0);
+    }
+
+    // 3. Animate Incoming Scene
+    gsap.killTweensOf([incomingScene, incomingScene.querySelectorAll('*')]);
+    
+    if (prevIndex === -1) {
+      // Initial load: Force centered and fade in
+      gsap.set(incomingScene, { xPercent: 0, autoAlpha: 0, pointerEvents: 'all' });
+      activeStoryTl.to(incomingScene, { autoAlpha: 1, duration: 0.8 }, 0);
+    } else {
+      gsap.set(incomingScene, { 
+        xPercent: 100 * direction, 
+        autoAlpha: 0,
+        pointerEvents: 'all'
+      });
+      activeStoryTl.to(incomingScene, {
+        xPercent: 0,
+        autoAlpha: 1,
+        duration: 0.7,
+        ease: 'power2.inOut'
+      }, 0);
+    }
+
+    // Content staggered animations (now part of activeStoryTl for sync)
+    const tag = incomingScene.querySelector('.story-scene-tag');
+    const headline = incomingScene.querySelector('.story-headline');
+    const divider = incomingScene.querySelector('.story-divider');
+    const sub = incomingScene.querySelector('.story-sub');
+    const visual = incomingScene.querySelector('.story-visual');
+
+    const contentDelay = prevIndex === -1 ? 0.1 : 0.35;
+    
+    if (visual) {
+      activeStoryTl.fromTo(visual, 
+        { autoAlpha: 0, scale: 0.8, filter: 'blur(10px)', y: 20 * direction },
+        { autoAlpha: 1, scale: 1, filter: 'blur(0px)', y: 0, duration: 0.8, ease: 'power2.out' },
+        contentDelay
+      );
+    }
+    
+    [tag, headline, divider, sub].forEach((el, i) => {
+      if (el) {
+        activeStoryTl.fromTo(el,
+          { autoAlpha: 0, y: 30 * direction, filter: 'blur(5px)' },
+          { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: 0.6, ease: 'power2.out' },
+          contentDelay + (i * 0.1)
+        );
+      }
+    });
+
+    // Scene-specific extras
+    if (index === 1) {
+      activeStoryTl.fromTo(incomingScene.querySelectorAll('.story-icon-item'),
+        { autoAlpha: 0, scale: 0.5, y: 20 },
+        { autoAlpha: 1, scale: 1, y: 0, stagger: 0.08, duration: 0.5, ease: 'back.out(1.7)' },
+        contentDelay + 0.3
+      );
+    } else if (index === 2) {
+      activeStoryTl.fromTo(incomingScene.querySelectorAll('.story-svc-card'),
+        { autoAlpha: 0, x: 20 * direction },
+        { autoAlpha: 1, x: 0, stagger: 0.06, duration: 0.4, ease: 'power2.out' },
+        contentDelay + 0.3
+      );
+    } else if (index === 3) {
+      activeStoryTl.fromTo(incomingScene.querySelectorAll('.story-stat'),
+        { autoAlpha: 0, y: 30, scale: 0.8 },
+        { autoAlpha: 1, y: 0, scale: 1, stagger: 0.1, duration: 0.6, ease: 'back.out(1.7)' },
+        contentDelay + 0.3
+      );
+    } else if (index === 4) {
+      activeStoryTl.fromTo(incomingScene.querySelector('.story-cta-btn'),
+        { autoAlpha: 0, scale: 0.9, y: 30 },
+        { autoAlpha: 1, scale: 1, y: 0, duration: 0.6, ease: 'back.out(1.5)' },
+        contentDelay + 0.3
+      );
+    }
+  }
+
+  function goToStoryScene(index) {
+    if (!storyActive) return;
+    const trigger = document.getElementById('scroll-story-trigger');
+    const targetScroll = trigger.offsetTop + (index / TOTAL_STORY_SCENES) * trigger.offsetHeight;
+    window.scrollTo({ top: targetScroll + 10, behavior: 'smooth' });
+  }
+
+  function completeStory() {
+    if (!storyActive) return;
+    storyActive = false;
+    sessionStorage.setItem('oks_story_seen', '1');
+
+    const outro = document.getElementById('story-outro');
+    const trigger = document.getElementById('scroll-story-trigger');
+    const skipBtn = document.getElementById('story-skip-btn');
+    
+    // 1. Lock scroll immediately to freeze the page state
+    document.body.style.overflow = 'hidden';
+    if (skipBtn) skipBtn.classList.add('hidden');
+
+    // 2. Premium Cinematic Curtain
+    if (outro) {
+      outro.style.pointerEvents = 'all';
+      gsap.to(outro, {
+        opacity: 1, 
+        duration: 0.5, 
+        ease: 'power2.inOut',
+        onComplete: () => {
+          // 3. While screen is black, cleanup and reset
+          if (trigger) trigger.classList.add('story-done');
+          window.scrollTo(0, 0);
+          
+          // 4. Reveal hero section with a smooth unlock
+          setTimeout(() => {
+            document.body.style.overflow = '';
+            gsap.to(outro, {
+              opacity: 0, 
+              duration: 0.8, 
+              ease: 'power4.out',
+              onComplete: () => { 
+                outro.style.pointerEvents = 'none'; 
+                ScrollTrigger.getAll().forEach(t => t.kill());
+              }
+            });
+          }, 150);
+        }
+      });
+    }
+  }
+
+  function skipStory() {
+    if (!sessionStorage.getItem('oks_story_seen')) {
+      sessionStorage.setItem('oks_story_seen', '1');
+    }
+    if (!storyActive) return;
+    storyActive = false;
+
+    const trigger = document.getElementById('scroll-story-trigger');
+    const outro = document.getElementById('story-outro');
+    const skipBtn = document.getElementById('story-skip-btn');
+    if (skipBtn) skipBtn.classList.add('hidden');
+
+    if (typeof gsap !== 'undefined' && outro) {
+      outro.style.pointerEvents = 'all';
+      gsap.to(outro, {
+        opacity: 1, duration: 0.4, ease: 'power2.inOut',
+        onComplete: () => {
+          if (trigger) trigger.classList.add('story-done');
+          window.scrollTo(0, 0);
+          gsap.to(outro, {
+            opacity: 0, duration: 0.6, ease: 'power2.out', delay: 0.15,
+            onComplete: () => { outro.style.pointerEvents = 'none'; }
+          });
+          if (typeof ScrollTrigger !== 'undefined') {
+            ScrollTrigger.getAll().forEach(t => t.kill());
+          }
+        }
+      });
+    } else {
+      if (trigger) trigger.classList.add('story-done');
+      if (outro) outro.style.opacity = '0';
+      window.scrollTo(0, 0);
+    }
+  }
 
   /* ======================== CUSTOM CURSOR ======================== */
   const cursor = document.getElementById('cursor');
