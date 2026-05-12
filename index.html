@@ -350,6 +350,24 @@
 
   .hero-content { position: relative; z-index: 2; max-width: 900px; }
 
+  .hero-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60vw;
+    max-width: 800px;
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: 1;
+    filter: grayscale(1) brightness(1.5);
+    animation: watermark-float 20s ease-in-out infinite;
+  }
+  @keyframes watermark-float {
+    0%, 100% { transform: translate(-50%, -52%) rotate(0deg) scale(1); }
+    50% { transform: translate(-48%, -48%) rotate(5deg) scale(1.05); }
+  }
+
   .hero-eyebrow {
     display: inline-flex;
     align-items: center;
@@ -1613,6 +1631,7 @@
     <div class="hero-bg"></div>
     <div class="hero-grid"></div>
     <div class="hero-particles"></div>
+    <img src="Static/Images/oks-logo.png" alt="" class="hero-watermark">
 
     <div class="hero-content">
       <div class="hero-eyebrow">Crafting Luxury Experiences Since 2015</div>
@@ -2287,6 +2306,7 @@
           <div class="service-hero-bg">
             <div class="${s.bgClass}" style="position:absolute; inset:0;"></div>
             <div class="service-hero-pattern"></div>
+            <img src="Static/Images/oks-logo.png" alt="" class="hero-watermark" style="opacity:0.03; width:40vw;">
           </div>
           <div class="service-hero-content">
             <button class="service-back" onclick="showPage('home')">
